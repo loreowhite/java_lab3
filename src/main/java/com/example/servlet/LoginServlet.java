@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
@@ -15,7 +16,6 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-
         HttpSession session = req.getSession(false);
         if (session != null && session.getAttribute("user") != null) {
             resp.sendRedirect(req.getContextPath() + "/files");
@@ -36,12 +36,19 @@ public class LoginServlet extends HttpServlet {
             req.getRequestDispatcher("/login.jsp").forward(req, resp);
             return;
         }
-        if (UserStorage.checkCredentials(login, password)) {
-            HttpSession session = req.getSession(true);
-            session.setAttribute("user", login);
-            resp.sendRedirect(req.getContextPath() + "/files");
-        } else {
-            req.setAttribute("error", "Неверный логин или пароль");
+
+        try {
+            if (UserDao.checkCredentials(login, password)) {
+                HttpSession session = req.getSession(true);
+                session.setAttribute("user", login);
+
+                resp.sendRedirect(req.getContextPath() + "/files");
+            } else {
+                req.setAttribute("error", "Неверный логин или пароль");
+                req.getRequestDispatcher("/login.jsp").forward(req, resp);
+            }
+        } catch (SQLException e) {
+            req.setAttribute("error", "Ошибка БД: "+ e.getMessage());
             req.getRequestDispatcher("/login.jsp").forward(req, resp);
         }
     }

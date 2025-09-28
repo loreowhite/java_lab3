@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLException;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
@@ -36,20 +37,26 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
-        if (UserStorage.find(login) != null) {
-            req.setAttribute("error", "Такой логин уже используется");
+        try {
+            if (UserDao.find(login) != null) {
+                req.setAttribute("error", "Такой логин уже используется");
+                req.getRequestDispatcher("/register.jsp").forward(req, resp);
+                return;
+            }
+
+            User user = new User(login, password, email);
+            UserDao.save(user);
+
+            Path userHome = AppConfig.HOMES_ROOT.resolve(login);
+            Files.createDirectories(userHome);
+
+            HttpSession session = req.getSession(true);
+            session.setAttribute("user", login);
+            resp.sendRedirect(req.getContextPath() + "/files");
+
+        } catch (SQLException e) {
+            req.setAttribute("error", "Ошибка БД: " + e.getMessage());
             req.getRequestDispatcher("/register.jsp").forward(req, resp);
-            return;
         }
-
-        User user = new User(login, password, email);
-        UserStorage.save(user);
-
-        Path userHome = AppConfig.HOMES_ROOT.resolve(login);
-        Files.createDirectories(userHome);
-
-        HttpSession session = req.getSession(true);
-        session.setAttribute("user", login);
-        resp.sendRedirect(req.getContextPath() + "/files");
     }
 }

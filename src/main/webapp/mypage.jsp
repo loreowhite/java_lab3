@@ -11,12 +11,29 @@
     th, td { border-bottom: 1px solid #eee; padding: 6px 8px; text-align: left; }
     th { background: #f8f8f8; }
     a { text-decoration: none; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .topbar form { margin:0; }
   </style>
 </head>
 <body>
+
+  <!-- Верхняя панель -->
+  <div class="topbar">
+    <div>
+      Пользователь: <b><%= request.getAttribute("username") %></b>
+    </div>
+    <form method="post" action="<%=request.getContextPath()%>/logout">
+      <button type="submit">Выход</button>
+    </form>
+  </div>
+
+  <!-- Дата/время -->
   <div style="color:#555;margin:8px 0"><%= request.getAttribute("now") %></div>
+
+  <!-- Текущий путь -->
   <h2 style="margin:0"><%= request.getAttribute("currentPath") %></h2>
 
+  <!-- Ссылка вверх -->
   <%
     String parent = (String) request.getAttribute("parent");
     if (parent != null) {
@@ -26,6 +43,7 @@
     }
   %>
 
+  <!-- Таблица файлов -->
   <table>
     <tr>
       <th>Файл</th>
