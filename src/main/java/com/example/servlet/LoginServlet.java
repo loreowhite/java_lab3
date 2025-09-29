@@ -2,13 +2,8 @@ package com.example.servlet;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-
+import jakarta.servlet.http.*;
 import java.io.IOException;
-import java.sql.SQLException;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
@@ -38,17 +33,16 @@ public class LoginServlet extends HttpServlet {
         }
 
         try {
-            if (UserDao.checkCredentials(login, password)) {
+            if (UserRepository.checkCredentials(login, password)) {
                 HttpSession session = req.getSession(true);
                 session.setAttribute("user", login);
-
                 resp.sendRedirect(req.getContextPath() + "/files");
             } else {
                 req.setAttribute("error", "Неверный логин или пароль");
                 req.getRequestDispatcher("/login.jsp").forward(req, resp);
             }
-        } catch (SQLException e) {
-            req.setAttribute("error", "Ошибка БД: "+ e.getMessage());
+        } catch (RuntimeException e) {
+            req.setAttribute("error", "Ошибка авторизации: " + e.getMessage());
             req.getRequestDispatcher("/login.jsp").forward(req, resp);
         }
     }

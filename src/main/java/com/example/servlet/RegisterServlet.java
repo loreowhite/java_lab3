@@ -2,15 +2,10 @@ package com.example.servlet;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-
+import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
@@ -38,14 +33,13 @@ public class RegisterServlet extends HttpServlet {
         }
 
         try {
-            if (UserDao.find(login) != null) {
+            if (UserRepository.findByLogin(login) != null) {
                 req.setAttribute("error", "Такой логин уже используется");
                 req.getRequestDispatcher("/register.jsp").forward(req, resp);
                 return;
             }
 
-            User user = new User(login, password, email);
-            UserDao.save(user);
+            UserRepository.save(new User(login, password, email));
 
             Path userHome = AppConfig.HOMES_ROOT.resolve(login);
             Files.createDirectories(userHome);
@@ -54,8 +48,8 @@ public class RegisterServlet extends HttpServlet {
             session.setAttribute("user", login);
             resp.sendRedirect(req.getContextPath() + "/files");
 
-        } catch (SQLException e) {
-            req.setAttribute("error", "Ошибка БД: " + e.getMessage());
+        } catch (RuntimeException e) {
+            req.setAttribute("error", "Ошибка при сохранении: " + e.getMessage());
             req.getRequestDispatcher("/register.jsp").forward(req, resp);
         }
     }
